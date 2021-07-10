@@ -30,7 +30,7 @@ app.message('hello', async ({ message, say }) => {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `Hey there <@${message.user}>!`,
+          text: `Hey there !`,
         },
         accessory: {
           type: 'button',
@@ -42,7 +42,7 @@ app.message('hello', async ({ message, say }) => {
         },
       },
     ],
-    text: `Hey there <@${message.user}>!`,
+    text: `Hey there !`,
   });
 });
 
@@ -55,9 +55,10 @@ app.action('button_click', async ({ body, ack, say }) => {
 
 // ローカル起動時に実行するコード
 if (process.env.IS_LOCAL === 'true') {
+  const PORT: any = process.env.PORT || 3000;
   (async () => {
     // Start your app
-    await app.start(process.env.PORT || 3000);
+    await app.start(PORT);
 
     console.log('⚡️ Bolt app is running!');
   })();
