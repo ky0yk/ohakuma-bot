@@ -22,6 +22,8 @@
     "typescript": "~3.9.7"
   },
   "dependencies": {
+    "@aws-cdk/aws-apigateway": "^1.112.0",
+    "@aws-cdk/aws-lambda-nodejs": "^1.112.0",
     "@aws-cdk/core": "1.111.0",
     "@slack/bolt": "^3.4.1",
     "aws-lambda": "^1.0.6",
