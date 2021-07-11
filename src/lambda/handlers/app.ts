@@ -53,17 +53,16 @@ const getItemInfo = async (id: number): Promise<string> => {
   return itemInfo;
 };
 
-// メッセージに"hello"が含まれていたら実行する処理
-app.message('おはクマ', async ({ say }) => {
-  const hoge = async () => {
-    const itemId = await getRandomItemId();
-    const itemInfo = await getItemInfo(itemId);
-    return itemInfo;
-  };
-  const response = JSON.parse(await hoge()); // TODO responseをいい感じに組み立てる
-  const message = `今日のクマーは「${response.name}」です。
-    ${response.info}
-    ${response.imageUrl}`;
+const getRandomItemInfo = async () => {
+  const itemId = await getRandomItemId();
+  const itemInfo = await getItemInfo(itemId);
+  return itemInfo;
+};
+
+// メッセージに"おはクマ"が含まれていたら実行する処理
+app.message(/^おはクマ$/, async ({ say }) => {
+  const bearInfo = JSON.parse(await getRandomItemInfo());
+  const message = `今日のクマーは「${bearInfo.name}」です。\n${bearInfo.info}\n${bearInfo.imageUrl}`;
   await say(message);
 });
 
