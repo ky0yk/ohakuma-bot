@@ -1,6 +1,8 @@
 import { App, ExpressReceiver } from '@slack/bolt';
 import * as awsServerlessExpress from 'aws-serverless-express';
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import { Interface } from 'readline';
+import { stringLike } from '@aws-cdk/assert';
 
 const processBeforeResponse = true;
 
@@ -24,51 +26,74 @@ export const handler = (
 
 const AWS = require('aws-sdk');
 
-AWS.config.update({
+const docClient = new AWS.DynamoDB.DocumentClient({
   region: 'ap-northeast-1',
 });
 
-const docClient = new AWS.DynamoDB.DocumentClient();
-const tableName = process.env.TABLE_NAME;
+const tableName: string = process.env.TABLE_NAME ? process.env.TABLE_NAME : '';
+if (!tableName) {
+  new Error('テーブル名を取得できませんでした。');
+}
+
+interface BearInfo {
+  name: string;
+  info?: string;
+  imageUrl?: string;
+  [attr: string]: any;
+}
 
 const getRandomItemId = async (): Promise<number> => {
+  interface Response {
+    Count: number;
+    ScannedCount: number;
+  }
   const params = {
     TableName: tableName,
     Select: 'COUNT',
   };
-  const response = await docClient.scan(params).promise();
-  const randomItemId = Math.floor(Math.random() * response.Count) + 1;
+  const response: Response = await docClient.scan(params).promise();
+  const randomItemId: number = Math.floor(Math.random() * response.Count) + 1;
   return randomItemId;
 };
 
 const getItemInfo = async (id: number): Promise<string> => {
+  interface Response {
+    Item: BearInfo;
+  }
   const params = {
     TableName: tableName,
     Key: {
       id: id,
     },
   };
-  const response = await docClient.get(params).promise();
-  const itemInfo = JSON.stringify(response.Item);
+  const response: Response = await docClient.get(params).promise();
+  const itemInfo: string = JSON.stringify(response.Item);
   return itemInfo;
 };
 
-const getRandomItemInfo = async () => {
-  const itemId = await getRandomItemId();
-  const itemInfo = await getItemInfo(itemId);
+const getRandomItemInfo = async (): Promise<string> => {
+  const itemId: number = await getRandomItemId();
+  const itemInfo: string = await getItemInfo(itemId);
   return itemInfo;
 };
 
-// メッセージに"おはクマ"が含まれていたら実行する処理
+// メッセージが"おはクマ"だったら実行する処理
 app.message(/^おはクマ$/, async ({ say }) => {
-  const bearInfo = JSON.parse(await getRandomItemInfo());
-  const message = `今日のクマーは「${bearInfo.name}」です。\n${bearInfo.info}\n${bearInfo.imageUrl}`;
+  const bearInfo: BearInfo = JSON.parse(await getRandomItemInfo());
+  console.log(bearInfo);
+  let message: string = `今日のクマーは「${bearInfo.name}」です。`;
+  if (bearInfo.info) {
+    message += `\n${bearInfo.info}`;
+  }
+  if (bearInfo.imageUrl) {
+    message += `\n${bearInfo.imageUrl}`;
+  }
   await say(message);
 });
 
 // ローカル起動時に実行するコード
 if (process.env.IS_LOCAL === 'true') {
-  const PORT: any = process.env.PORT || 3000;
+  const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 3000;
   (async () => {
     // Start your app
     await app.start(PORT);
