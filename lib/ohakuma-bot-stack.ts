@@ -8,12 +8,18 @@ export class OhakumaBotStack extends cdk.Stack {
     super(scope, id, props);
 
     // The code that defines your stack goes here
+    const table = new dynamodb.Table(this, 'Table', {
+      tableName: 'bearInfo',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.NUMBER },
+    });
+
     const appLambda = new NodejsFunction(this, 'appLambda', {
       entry: 'src/lambda/handlers/app.ts',
       handler: 'handler',
       environment: {
         SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN || '',
         SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET || '',
+        TABLE_NAME: table.tableName,
       },
     });
 
@@ -21,9 +27,6 @@ export class OhakumaBotStack extends cdk.Stack {
       handler: appLambda,
     });
 
-    const table = new dynamodb.Table(this, 'Table', {
-      tableName: 'bearInfo',
-      partitionKey: { name: 'id', type: dynamodb.AttributeType.NUMBER },
-    });
+    table.grantReadData(appLambda);
   }
 }

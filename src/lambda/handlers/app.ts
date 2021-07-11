@@ -22,35 +22,49 @@ export const handler = (
   awsServerlessExpress.proxy(server, event, context);
 };
 
-// メッセージに"hello"が含まれていたら実行する処理
-app.message('hello', async ({ message, say }) => {
-  await say({
-    blocks: [
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `Hey there !`,
-        },
-        accessory: {
-          type: 'button',
-          text: {
-            type: 'plain_text',
-            text: 'Click Me',
-          },
-          action_id: 'button_click',
-        },
-      },
-    ],
-    text: `Hey there !`,
-  });
+const AWS = require('aws-sdk');
+
+AWS.config.update({
+  region: 'ap-northeast-1',
 });
 
-// action_idが"button_click"のアクションが実行された際に実行する処理
-app.action('button_click', async ({ body, ack, say }) => {
-  // Acknowledge the action
-  await ack();
-  await say(`<@${body.user.id}> clicked the button`);
+const docClient = new AWS.DynamoDB.DocumentClient();
+const tableName = process.env.TABLE_NAME;
+
+const getRandomItemId = async (): Promise<number> => {
+  const params = {
+    TableName: tableName,
+    Select: 'COUNT',
+  };
+  const response = await docClient.scan(params).promise();
+  const randomItemId = Math.floor(Math.random() * response.Count) + 1;
+  return randomItemId;
+};
+
+const getItemInfo = async (id: number): Promise<string> => {
+  const params = {
+    TableName: tableName,
+    Key: {
+      id: id,
+    },
+  };
+  const response = await docClient.get(params).promise();
+  const itemInfo = JSON.stringify(response.Item);
+  return itemInfo;
+};
+
+// メッセージに"hello"が含まれていたら実行する処理
+app.message('おはクマ', async ({ say }) => {
+  const hoge = async () => {
+    const itemId = await getRandomItemId();
+    const itemInfo = await getItemInfo(itemId);
+    return itemInfo;
+  };
+  const response = JSON.parse(await hoge()); // TODO responseをいい感じに組み立てる
+  const message = `今日のクマーは「${response.name}」です。
+    ${response.info}
+    ${response.imageUrl}`;
+  await say(message);
 });
 
 // ローカル起動時に実行するコード
