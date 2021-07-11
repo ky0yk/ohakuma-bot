@@ -23,10 +23,10 @@
   },
   "dependencies": {
     "@aws-cdk/aws-apigateway": "^1.112.0",
-    "@aws-cdk/aws-lambda-nodejs": "^1.112.0",
-    "@aws-cdk/core": "1.111.0",
+    "@aws-cdk/aws-lambda-nodejs": "^1.74.0",
+    "@aws-cdk/core": "^1.112.0",
     "@slack/bolt": "^3.4.1",
-    "aws-lambda": "^1.0.6",
+    "@types/aws-lambda": "^8.10.64",
     "aws-serverless-express": "^3.4.0",
     "source-map-support": "^0.5.16"
   }
