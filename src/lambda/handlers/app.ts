@@ -1,8 +1,6 @@
 import { App, ExpressReceiver } from '@slack/bolt';
 import * as awsServerlessExpress from 'aws-serverless-express';
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { Interface } from 'readline';
-import { stringLike } from '@aws-cdk/assert';
 
 const processBeforeResponse = true;
 
@@ -35,50 +33,51 @@ if (!tableName) {
   new Error('テーブル名を取得できませんでした。');
 }
 
-interface BearInfo {
+type BearInfo = {
   name: string;
   info?: string;
   imageUrl?: string;
   [attr: string]: any;
-}
-
-const getRandomItemId = async (): Promise<number> => {
-  interface Response {
-    Count: number;
-    ScannedCount: number;
-  }
-  const params = {
-    TableName: tableName,
-    Select: 'COUNT',
-  };
-  const response: Response = await docClient.scan(params).promise();
-  const randomItemId: number = Math.floor(Math.random() * response.Count) + 1;
-  return randomItemId;
-};
-
-const getItemInfo = async (id: number): Promise<string> => {
-  interface Response {
-    Item: BearInfo;
-  }
-  const params = {
-    TableName: tableName,
-    Key: {
-      id: id,
-    },
-  };
-  const response: Response = await docClient.get(params).promise();
-  const itemInfo: string = JSON.stringify(response.Item);
-  return itemInfo;
 };
 
 const getRandomItemInfo = async (): Promise<string> => {
+  const getRandomItemId = async (): Promise<number> => {
+    type Response = {
+      Count: number;
+      ScannedCount: number;
+    };
+    const params = {
+      TableName: tableName,
+      Select: 'COUNT',
+    };
+    const response: Response = await docClient.scan(params).promise();
+    const randomItemId: number = Math.floor(Math.random() * response.Count) + 1;
+    return randomItemId;
+  };
+
+  const getItemInfo = async (id: number): Promise<string> => {
+    type Response = {
+      Item: BearInfo;
+    };
+    const params = {
+      TableName: tableName,
+      Key: {
+        id: id,
+      },
+    };
+    const response: Response = await docClient.get(params).promise();
+    const itemInfo: string = JSON.stringify(response.Item);
+    return itemInfo;
+  };
+
   const itemId: number = await getRandomItemId();
   const itemInfo: string = await getItemInfo(itemId);
+
   return itemInfo;
 };
 
 // メッセージが"おはクマ"だったら実行する処理
-app.message(/^おはクマ$/, async ({ say }) => {
+app.message(/^おはクマ)$/, async ({ say }) => {
   const bearInfo: BearInfo = JSON.parse(await getRandomItemInfo());
   console.log(bearInfo);
   let message: string = `今日のクマーは「${bearInfo.name}」です。`;
